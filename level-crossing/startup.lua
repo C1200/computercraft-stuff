@@ -2,7 +2,11 @@ local signalTarget = peripheral.wrap("create_target_10")
 local departureTarget = peripheral.wrap("create_target_11")
 
 local open = true
+local flash = true
 local time = 0
+
+local flashOn = { r = 255, g = 0, b = 0 }
+local flashOff = { r = 0, g = 0, b = 0 }
 
 if fs.exists("state.dat") then
   local file = fs.open("state.dat", "rb")
@@ -13,6 +17,24 @@ end
 while true do
   local shouldBeOpen = string.match(signalTarget.getLine(1), "Clear") ~= nil
   local anotherTrain = string.match(departureTarget.getLine(1), "now") ~= nil
+
+  flash = not flash
+  local fa = flashOn
+  local fb = flashOff
+  if open then
+    fa = flashOff
+    fb = flashOff
+  elseif flash then
+    fa = flashOff
+    fb = flashOn
+  end
+  
+  peripheral.find(
+    "Create_NixieTube",
+    function(name, nixie)
+      nixie.setSignal(fa, fb)
+    end
+  )
 
   print("  another train", anotherTrain)
 
@@ -38,6 +60,13 @@ while true do
       mod = -1
       print("open")
     else
+      peripheral.find(
+        "Create_NixieTube",
+        function(name, nixie)
+          nixie.setSignal(flashOn, flashOn)
+        end
+      )
+    
       print("close")
     end
   
